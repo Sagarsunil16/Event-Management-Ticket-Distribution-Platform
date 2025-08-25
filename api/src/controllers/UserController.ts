@@ -13,8 +13,8 @@ export class UserController{
         try {
             const user = await this.userService.registerUser(req.body);
             res.status(201).json({user});
-        } catch (error:any) {
-            next(error)
+        } catch (err:any) {
+            next(err)
         }
     }
 
@@ -23,8 +23,8 @@ export class UserController{
             const {email,password} = req.body
             const {user,token} = await this.userService.loginUser(email,password)
             res.status(200).json({user,token})
-        } catch (error) {
-            next(error)
+        } catch (err) {
+            next(err)
         }
     }
 
@@ -34,8 +34,8 @@ export class UserController{
             if(!user) throw new CustomError('Not Found',404)
             
             res.status(200).json({user})
-        } catch (error) {
-            next(error)
+        } catch (err) {
+            next(err)
         }
     }
 }

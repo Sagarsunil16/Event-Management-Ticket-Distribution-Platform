@@ -13,7 +13,7 @@ export interface AuthRequest extends Request{
     user?:jwtPayload
 }
 
-export const authenticatedJWT = (req:AuthRequest,res:Response,next:NextFunction)=>{
+export const authenticateJWT = (req:AuthRequest,res:Response,next:NextFunction)=>{
     const authHeader =  req.headers.authorization
 
      if (!authHeader || !authHeader.startsWith('Bearer ')) {

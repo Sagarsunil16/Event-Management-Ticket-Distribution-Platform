@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { userController } from "../container/di";
-import { authenticatedJWT } from "../middleware/auth";
+import { authenticateJWT} from "../middleware/auth";
 
 
 const userRouter = Router()
