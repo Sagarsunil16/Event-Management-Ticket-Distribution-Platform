@@ -22,7 +22,7 @@ export class TicketService implements ITicketService{
 
         if(event.ticketsSold >= event.totalTickets) throw new CustomError("Sold out",400)
 
-        const ticket = await this._ticketRepo.create({attendeeId:new mongoose.Types.ObjectId(attendeeId),eventId:new mongoose.Types.ObjectId(attendeeId),status: 'active',bookingDate: new Date()
+        const ticket = await this._ticketRepo.create({attendeeId:new mongoose.Types.ObjectId(attendeeId),eventId:new mongoose.Types.ObjectId(eventId),status: 'active',bookingDate: new Date()
         });
         event.ticketsSold += 1;
         await event.save();
