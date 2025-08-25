@@ -6,9 +6,9 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
 export class UserService implements IUserService {
-  private userRepo: IUserRepository;
+  private _userRepo: IUserRepository;
   constructor(userRepo: IUserRepository) {
-    this.userRepo = userRepo;
+    this._userRepo = userRepo;
   }
 
   async registerUser(data: {
@@ -17,18 +17,18 @@ export class UserService implements IUserService {
     password: string;
     role: "organizer" | "attendee";
   }): Promise<IUserDocumnet> {
-    const existing = await this.userRepo.findByEmail(data.email);
+    const existing = await this._userRepo.findByEmail(data.email);
     if (existing) throw new CustomError("Email already registered", 400);
 
     const hashedPassword = await bcrypt.hash(data.password, 10);
-    return this.userRepo.create({ ...data, password: hashedPassword });
+    return this._userRepo.create({ ...data, password: hashedPassword });
   }
 
   async loginUser(
     email: string,
     password: string
   ): Promise<{ user: IUserDocumnet; token: string }> {
-    const user = await this.userRepo.findByEmail(email);
+    const user = await this._userRepo.findByEmail(email);
     if (!user) throw new CustomError("Invalid credentials", 400);
 
     const match = await bcrypt.compare(password, user.password);
@@ -44,6 +44,6 @@ export class UserService implements IUserService {
   }
 
   async getUserById(id: string): Promise<IUserDocumnet | null> {
-      return await this.userRepo.findById(id)
+      return await this._userRepo.findById(id)
   }
 }

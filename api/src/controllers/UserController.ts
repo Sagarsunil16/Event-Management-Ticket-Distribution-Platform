@@ -3,15 +3,15 @@ import { IUserService } from "../services/interfaces/IUserService";
 import { CustomError } from "../utils/CustomError";
 
 export class UserController{
-    private userService:IUserService
+    private _userService:IUserService
     
     constructor(userService:IUserService){
-        this.userService = userService
+        this._userService = userService
     }
 
     async register(req:Request,res:Response,next:NextFunction):Promise<void>{
         try {
-            const user = await this.userService.registerUser(req.body);
+            const user = await this._userService.registerUser(req.body);
             res.status(201).json({user});
         } catch (err:any) {
             next(err)
@@ -21,20 +21,20 @@ export class UserController{
     async login(req:Request,res:Response,next:NextFunction):Promise<void>{
         try {
             const {email,password} = req.body
-            const {user,token} = await this.userService.loginUser(email,password)
+            const {user,token} = await this._userService.loginUser(email,password)
             res.status(200).json({user,token})
-        } catch (err) {
+        } catch (err:any) {
             next(err)
         }
     }
 
     async getProfile(req:Request,res:Response,next:NextFunction):Promise<void>{
         try {
-            const user = await this.userService.getUserById(req.params.id);
+            const user = await this._userService.getUserById(req.params.id);
             if(!user) throw new CustomError('Not Found',404)
             
             res.status(200).json({user})
-        } catch (err) {
+        } catch (err:any) {
             next(err)
         }
     }
