@@ -7,6 +7,10 @@ import paymentRouter from "./payment";
 const mainRouter = Router()
 
 
+mainRouter.options('*', (req, res) => {
+  res.status(200).send(); 
+});
+
 mainRouter.use('/users',userRouter)
 mainRouter.use('/events',eventRouter)
 mainRouter.use('/tickets',ticketRouter)
