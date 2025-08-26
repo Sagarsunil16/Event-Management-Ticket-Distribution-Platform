@@ -1,4 +1,5 @@
-import { useState } from "react"
+import { useState, useContext } from "react"
+import { useNavigate, Link } from "react-router-dom"
 import { Button } from '../ui/button'
 import { Input } from "../ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card"
@@ -6,7 +7,13 @@ import { Label } from "../ui/label"
 import { Alert, AlertDescription } from "../ui/alert"
 import { Eye, EyeOff, Calendar, Ticket } from "lucide-react"
 import api from "../../services/api"
-import { Link } from "react-router-dom"
+import { AuthContext } from "../../context/authContext"
+import { jwtDecode } from "jwt-decode"
+
+interface JwtPayload {
+  id: string
+  role: "attendee" | "organizer"
+}
 
 const Login = () => {
   const [email, setEmail] = useState("")
@@ -15,6 +22,9 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
 
+  const { setToken, setRole } = useContext(AuthContext)
+  const navigate = useNavigate()
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
@@ -22,7 +32,21 @@ const Login = () => {
 
     try {
       const res = await api.post("/users/login", { email, password })
-      localStorage.setItem("token", res.data.token)
+      const token = res.data.token
+
+      // Update context
+      setToken(token)
+
+      // Decode role
+      const decoded = jwtDecode<JwtPayload>(token)
+      setRole(decoded.role)
+
+      // Redirect based on role
+      if (decoded.role === "organizer") {
+        navigate("/organizer/dashboard")
+      } else if (decoded.role === "attendee") {
+        navigate("/events")
+      }
     } catch (err: any) {
       setError(err.response?.data?.error || "Login failed. Please check your credentials.")
     } finally {
