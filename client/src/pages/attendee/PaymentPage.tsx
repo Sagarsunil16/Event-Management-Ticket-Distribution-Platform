@@ -179,6 +179,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ eventId, eventTitle, eventPri
 const PaymentPage: React.FC = () => {
   const { id } = useParams();
   const eventId = id;
+  console.log('PaymentPage eventId:', eventId);
   const navigate = useNavigate();
   const [event, setEvent] = useState<Event | null>(null);
   const [error, setError] = useState("");
