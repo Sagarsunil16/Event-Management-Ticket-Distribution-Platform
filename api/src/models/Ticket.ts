@@ -1,8 +1,9 @@
 import { Schema, model, Document, Types } from "mongoose";
+import { IEventDocument } from "./Event";
 
 export interface ITicket{
     attendeeId: Types.ObjectId;
-    eventId: Types.ObjectId;
+    eventId: Types.ObjectId | IEventDocument;
     bookingDate: Date;
     status: 'active' | 'cancelled';
 }

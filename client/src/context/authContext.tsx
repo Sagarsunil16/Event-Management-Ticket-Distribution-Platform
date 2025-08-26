@@ -1,4 +1,3 @@
-// src/context/AuthContext.tsx
 import React, { createContext, useState, useEffect, type ReactNode } from 'react';
 import { jwtDecode } from 'jwt-decode';
 
@@ -28,7 +27,7 @@ interface AuthProviderProps {
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const storedToken = localStorage.getItem('token');
 
-  // initialize role immediately if token exists
+
   let initialRole: string | null = null;
   if (storedToken) {
     try {

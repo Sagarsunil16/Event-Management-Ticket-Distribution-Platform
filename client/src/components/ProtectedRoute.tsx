@@ -1,11 +1,10 @@
-// src/components/ProtectedRoute.tsx
 import { useContext, type JSX } from "react";
 import { Navigate } from "react-router-dom";
 import { AuthContext } from "../context/authContext";
 
 interface ProtectedRouteProps {
   children: JSX.Element;
-  role?: "attendee" | "organizer"; // optional: enforce role
+  role?: "attendee" | "organizer"; 
 }
 
 const ProtectedRoute = ({ children, role }: ProtectedRouteProps) => {

@@ -1,4 +1,4 @@
-import { IUserDocumnet } from "../models/User";
+import { IUser, IUserDocumnet } from "../models/User";
 import { IUserRepository } from "../repositories/interfaces/IUserRepository";
 import { CustomError } from "../utils/CustomError";
 import { IUserService } from "./interfaces/IUserService";
@@ -44,6 +44,20 @@ export class UserService implements IUserService {
   }
 
   async getUserById(id: string): Promise<IUserDocumnet | null> {
-      return await this._userRepo.findById(id)
+    return await this._userRepo.findById(id);
+  }
+
+  async updateProfile(
+    updateData: Partial<IUser>,
+    userId: string
+  ): Promise<IUserDocumnet | null> {
+    if (updateData.password) {
+      updateData.password = await bcrypt.hash(updateData.password, 10);
+    }
+    const updatedUser = await this._userRepo.update(userId, updateData);
+    if (!updatedUser) {
+      throw new CustomError("User not found", 404);
+    }
+    return updatedUser;
   }
 }

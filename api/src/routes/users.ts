@@ -8,7 +8,8 @@ const userRouter = Router()
 
 userRouter.post('/register',userController.register.bind(userController))
 userRouter.post('/login',userController.login.bind(userController))
-userRouter.get('/:id',userController.getProfile.bind(userController))
+userRouter.get('/me',authenticateJWT,userController.getProfile.bind(userController))
+userRouter.put('/profile',authenticateJWT,userController.updateProfile.bind(userController))
 
 
 

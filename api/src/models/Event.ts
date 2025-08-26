@@ -9,6 +9,7 @@ export interface IEvent{
     category: string;
     totalTickets: number;
     ticketsSold: number;
+    price:number;
 }
 
 export interface IEventDocument extends IEvent , Document{}
@@ -22,6 +23,7 @@ const EventSchema = new Schema<IEventDocument>({
         category: { type: String, required: true },
         totalTickets: { type: Number, required: true, min: 1 },
         ticketsSold: { type: Number, default: 0 },
+        price:{type:Number,default:0}
     },
     { timestamps: true }
 )
