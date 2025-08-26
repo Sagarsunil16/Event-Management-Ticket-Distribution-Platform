@@ -18,7 +18,7 @@ app.use(express.json())
 app.use(express.urlencoded({extended:true}))
 app.use(cookieParser())
 
-const allowedOrigins = ["http://localhost:5173","https://event-management-ticket-distribution-ieit.onrender.com"];
+const allowedOrigins = ["http://localhost:5173","https://event-management-ticket-distributio.vercel.app"];
 app.use(
   cors({
     origin: (origin, callback) => {
