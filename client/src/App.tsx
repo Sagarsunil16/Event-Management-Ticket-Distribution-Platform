@@ -11,6 +11,7 @@ import Navbar from "./components/Navbar";
 import MyTickets from "./pages/MyTickets";
 import Profile from "./pages/Profile";
 import EventDetails from "./pages/EventDetails";
+import PaymentPage from "./pages/PaymentPage";
 
 const App = () => (
   <Router>
@@ -67,6 +68,15 @@ const App = () => (
         element={
           <ProtectedRoute role="attendee">
             <EventDetails />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/events/:id/payment"
+        element={
+          <ProtectedRoute role="attendee">
+            <PaymentPage />
           </ProtectedRoute>
         }
       />

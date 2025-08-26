@@ -48,7 +48,13 @@ const EventDetails: React.FC = () => {
     }
 
     if (event?.price && event.price > 0) {
-      navigate(`/events/${eventId}/payment`)
+      navigate(`/events/${eventId}/payment`, {
+      state: {
+        eventId,
+        eventTitle: event.title,
+        eventPrice: event.price,
+      },
+    });
       return
     }
 

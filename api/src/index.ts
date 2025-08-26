@@ -5,11 +5,15 @@ import cookieParser from 'cookie-parser'
 import { CustomError } from './utils/CustomError'
 import mainRouter from './routes/mainRouter'
 import mongoConnect from './config/db'
+import webhookRouter from './routes/webhook'
 
 dotenv.config()
 
 const app = express()
 mongoConnect()
+
+app.use("/webhook", webhookRouter);
+
 app.use(express.json())
 app.use(express.urlencoded({extended:true}))
 app.use(cookieParser())
