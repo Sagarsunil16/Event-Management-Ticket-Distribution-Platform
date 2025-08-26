@@ -8,9 +8,9 @@ export interface IUser {
   profileInfo?: string;
 }
 
-export interface IUserDocumnet extends IUser, Document {}
+export interface IUserDocument extends IUser, Document {}
 
-const UserSchema: Schema = new Schema<IUserDocumnet>(
+const UserSchema: Schema = new Schema<IUserDocument>(
   {
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
@@ -23,4 +23,4 @@ const UserSchema: Schema = new Schema<IUserDocumnet>(
   }
 );
 
-export default model<IUserDocumnet>("User", UserSchema);
+export default model<IUserDocument>("User", UserSchema);

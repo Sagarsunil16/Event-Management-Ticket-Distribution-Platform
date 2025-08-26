@@ -1,4 +1,4 @@
-import { IUser, IUserDocumnet } from "../models/User";
+import { IUser, IUserDocument } from "../models/User";
 import { IUserRepository } from "../repositories/interfaces/IUserRepository";
 import { CustomError } from "../utils/CustomError";
 import { IUserService } from "./interfaces/IUserService";
@@ -16,7 +16,7 @@ export class UserService implements IUserService {
     email: string;
     password: string;
     role: "organizer" | "attendee";
-  }): Promise<IUserDocumnet> {
+  }): Promise<IUserDocument> {
     const existing = await this._userRepo.findByEmail(data.email);
     if (existing) throw new CustomError("Email already registered", 400);
 
@@ -27,7 +27,7 @@ export class UserService implements IUserService {
   async loginUser(
     email: string,
     password: string
-  ): Promise<{ user: IUserDocumnet; token: string }> {
+  ): Promise<{ user: IUserDocument; token: string }> {
     const user = await this._userRepo.findByEmail(email);
     if (!user) throw new CustomError("Invalid credentials", 400);
 
@@ -43,14 +43,14 @@ export class UserService implements IUserService {
     return { user, token };
   }
 
-  async getUserById(id: string): Promise<IUserDocumnet | null> {
+  async getUserById(id: string): Promise<IUserDocument | null> {
     return await this._userRepo.findById(id);
   }
 
   async updateProfile(
     updateData: Partial<IUser>,
     userId: string
-  ): Promise<IUserDocumnet | null> {
+  ): Promise<IUserDocument | null> {
     if (updateData.password) {
       updateData.password = await bcrypt.hash(updateData.password, 10);
     }

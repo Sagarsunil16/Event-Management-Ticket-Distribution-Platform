@@ -1,7 +1,7 @@
 import { IBaseRepository } from "../BaseRepository";
-import { IUserDocumnet } from "../../models/User";
+import { IUserDocument } from "../../models/User";
 
 
-export interface IUserRepository extends IBaseRepository<IUserDocumnet>{
-    findByEmail(email:String):Promise<IUserDocumnet | null>
+export interface IUserRepository extends IBaseRepository<IUserDocument>{
+    findByEmail(email:String):Promise<IUserDocument | null>
 }
