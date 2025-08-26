@@ -1,14 +1,20 @@
 {
   "compilerOptions": {
-    "target": "ES2020",
-    "module": "CommonJS",
-    "lib": ["ES2020"],
-    "moduleResolution": "node10",
-    "esModuleInterop": true,
-    "resolveJsonModule": true,
-    "skipLibCheck": true,
-    "outDir": "./dist",
-    "types": ["node"]
+    "target": "ES2016", // Or ESNext for modern features
+    "module": "CommonJS", // Use CommonJS for Node.js
+    "lib": ["ES2016", "DOM"], // Include ES2016 for array methods
+    "moduleResolution": "node", // Node.js module resolution
+    "esModuleInterop": true, // Enable CommonJS/ES module interoperability
+    "strict": true, // Enforce strict type checking
+    "skipLibCheck": true, // Skip type checking for third-party libraries
+    "baseUrl": ".", // Base directory for module resolution
+    "paths": {
+      "@/*": ["src/*"] // Optional: For path aliases
+    },
+    "outDir": "./dist", // Output directory for compiled files
+    "rootDir": "./src", // Source directory
+    "types": ["node"] // Explicitly include Node.js types
   },
-  "include": ["src/**/*"]
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"]
 }
