@@ -1,8 +1,8 @@
 import { useEffect, useState, useContext } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import { Calendar, MapPin, Tag, Users, Clock } from "lucide-react"
-import api from "../services/api"
-import { AuthContext } from "../context/authContext"
+import api from "../../services/api"
+import { AuthContext } from "../../context/authContext"
 
 interface Event {
   _id: string

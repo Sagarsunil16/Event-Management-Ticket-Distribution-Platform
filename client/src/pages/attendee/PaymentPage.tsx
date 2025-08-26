@@ -2,8 +2,8 @@ import { useEffect, useState, useContext } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements, CardElement, useStripe, useElements } from "@stripe/react-stripe-js";
-import api from "../services/api";
-import { AuthContext } from "../context/authContext";
+import api from "../../services/api";
+import { AuthContext } from "../../context/authContext";
 
 // Initialize Stripe with your publishable key
 console.log("Stripe Publishable Key:",import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY );

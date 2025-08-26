@@ -1,13 +1,10 @@
-import { useEffect, useState } from "react"
-import { useNavigate, Link, useParams } from "react-router-dom"
-import { Calendar, MapPin, Users, Tag, ArrowLeft, FileText } from "lucide-react"
-import api from "../services/api"
+import { useState } from "react"
+import { useNavigate, Link } from "react-router-dom"
+import { Calendar, MapPin, Users, Tag, FileText, /* Upload */ ArrowLeft } from "lucide-react"
+import api from "../../services/api"
 
-const EditEvent: React.FC = () => {
+const CreateEvent: React.FC = () => {
   const navigate = useNavigate()
-  const { id } = useParams<{ id: string }>()
-  const eventId = id as string
-
   const [form, setForm] = useState({
     title: "",
     description: "",
@@ -15,92 +12,71 @@ const EditEvent: React.FC = () => {
     venue: "",
     category: "",
     totalTickets: 10,
-    ticketPrice: 0,
+    price: 0,
+    // image: null as File | null, // removed for now
   })
-
   const [error, setError] = useState("")
   const [success, setSuccess] = useState(false)
-  const [loading, setLoading] = useState(true)
-  const [submitting, setSubmitting] = useState(false)
+  const [loading, setLoading] = useState(false)
+  // const [imagePreview, setImagePreview] = useState<string | null>(null)
 
   const categories = [
     "Conference",
     "Workshop",
-    "Seminar",
-    "Networking",
     "Concert",
-    "Festival",
     "Sports",
+    "Festival",
+    "Networking",
     "Exhibition",
-    "Training",
-    "Hackathon ",
+    "Seminar",
+    "Hackathon",
     "Other",
   ]
-
-  // Load event details
-  useEffect(() => {
-    if (eventId) {
-      api
-        .get(`/events/${eventId}`)
-        .then((res) => {
-          const evt = res.data
-          setForm({
-            title: evt.title,
-            description: evt.description,
-            date: evt.date.slice(0, 16),
-            venue: evt.venue,
-            category: evt.category,
-            totalTickets: evt.totalTickets,
-            ticketPrice: evt.ticketPrice || 0,
-          })
-        })
-        .catch(() => setError("Failed to load event for editing"))
-        .finally(() => setLoading(false))
-    }
-  }, [eventId])
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target
-    setForm((prev) => ({
-      ...prev,
-      [name]: name === "totalTickets" || name === "ticketPrice" ? Number(value) : value,
-    }))
+    setForm({
+      ...form,
+      [name]: name === "totalTickets" || name === "price" ? Number(value) : value,
+    })
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError("")
-    setSubmitting(true)
-
-    try {
-      await api.put(`/events/${eventId}`, form, {
-        headers: { "Content-Type": "application/json" },
-      })
-      setSuccess(true)
-      setTimeout(() => navigate("/organizer/dashboard"), 1200)
-    } catch (err: any) {
-      setError(err.response?.data?.error || "Update failed")
-    } finally {
-      setSubmitting(false)
+  // ❌ Image upload removed
+  /*
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      setForm({ ...form, image: file })
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string)
+      }
+      reader.readAsDataURL(file)
     }
   }
+  */
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="bg-white rounded-xl shadow-sm border p-8 text-center max-w-md w-full">
-          <div className="animate-pulse space-y-4">
-            <div className="h-6 bg-gray-200 rounded"></div>
-            <div className="h-4 bg-gray-200 rounded"></div>
-            <div className="h-4 bg-gray-200 rounded"></div>
-          </div>
-          <p className="text-gray-600 mt-4">Loading event...</p>
-        </div>
-      </div>
-    )
+  const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault()
+  setError("")
+  setLoading(true)
+
+  try {
+    await api.post("/events", form, {
+      headers: { "Content-Type": "application/json" },
+    })
+
+    setSuccess(true)
+    setTimeout(() => navigate("/organizer/dashboard"), 1500)
+  } catch (err: any) {
+    setError(err.response?.data?.error || "Failed to create event")
+  } finally {
+    setLoading(false)
   }
+}
+
 
   if (success) {
     return (
@@ -110,7 +86,7 @@ const EditEvent: React.FC = () => {
             <Calendar className="w-8 h-8 text-emerald-600" />
           </div>
           <h2 className="text-2xl font-bold text-gray-900 mb-2">
-            Event Updated Successfully!
+            Event Created Successfully!
           </h2>
           <p className="text-gray-600 mb-4">Redirecting to your dashboard...</p>
           <div className="w-8 h-8 border-4 border-emerald-200 border-t-emerald-600 rounded-full animate-spin mx-auto"></div>
@@ -126,8 +102,10 @@ const EditEvent: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-6">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Edit Event</h1>
-              <p className="mt-1 text-gray-600">Update your event details and settings</p>
+              <h1 className="text-3xl font-bold text-gray-900">Create New Event</h1>
+              <p className="mt-1 text-gray-600">
+                Fill in the details to create your event and start selling tickets
+              </p>
             </div>
             <Link
               to="/organizer/dashboard"
@@ -142,10 +120,7 @@ const EditEvent: React.FC = () => {
 
       {/* Form */}
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <form
-          onSubmit={handleSubmit}
-          className="bg-white rounded-xl shadow-sm border p-8 space-y-8"
-        >
+        <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-sm border p-8 space-y-8">
           {/* Basic Information */}
           <div>
             <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
@@ -189,7 +164,8 @@ const EditEvent: React.FC = () => {
               {/* Date */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  <Calendar className="w-4 h-4 inline mr-1" /> Date & Time *
+                  <Calendar className="w-4 h-4 inline mr-1" />
+                  Date & Time *
                 </label>
                 <input
                   type="datetime-local"
@@ -204,7 +180,8 @@ const EditEvent: React.FC = () => {
               {/* Venue */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  <MapPin className="w-4 h-4 inline mr-1" /> Venue *
+                  <MapPin className="w-4 h-4 inline mr-1" />
+                  Venue *
                 </label>
                 <input
                   type="text"
@@ -220,7 +197,8 @@ const EditEvent: React.FC = () => {
               {/* Category */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  <Tag className="w-4 h-4 inline mr-1" /> Category *
+                  <Tag className="w-4 h-4 inline mr-1" />
+                  Category *
                 </label>
                 <select
                   name="category"
@@ -237,10 +215,30 @@ const EditEvent: React.FC = () => {
                   ))}
                 </select>
               </div>
+
+              {/* Price */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Ticket Price ($)
+                </label>
+                <input
+                  type="number"
+                  name="price"
+                  value={form.price}
+                  onChange={handleChange}
+                  min="0"
+                  step="0.01"
+                  placeholder="0.00"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                />
+                <p className="text-sm text-gray-500 mt-1">
+                  Leave as 0 for free events
+                </p>
+              </div>
             </div>
           </div>
 
-          {/* Tickets */}
+          {/* Tickets (image upload removed) */}
           <div className="border-t border-gray-200 pt-8">
             <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
               <Users className="w-5 h-5 mr-2 text-emerald-600" />
@@ -264,23 +262,26 @@ const EditEvent: React.FC = () => {
                 />
               </div>
 
-              {/* Ticket Price */}
+              {/* ❌ Event Image Removed */}
+              {/*
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Ticket Price ($)
+                  <Upload className="w-4 h-4 inline mr-1" />
+                  Event Image
                 </label>
                 <input
-                  type="number"
-                  name="ticketPrice"
-                  value={form.ticketPrice}
-                  onChange={handleChange}
-                  min="0"
-                  step="0.01"
-                  placeholder="0.00"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="..."
                 />
-                <p className="text-sm text-gray-500 mt-1">Leave as 0 for free events</p>
+                {imagePreview && (
+                  <div className="mt-4">
+                    <img src={imagePreview} alt="Event preview" className="w-full h-48 object-cover rounded-lg" />
+                  </div>
+                )}
               </div>
+              */}
             </div>
           </div>
 
@@ -301,17 +302,18 @@ const EditEvent: React.FC = () => {
             </Link>
             <button
               type="submit"
-              disabled={submitting}
+              disabled={loading}
               className="px-8 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
             >
-              {submitting ? (
+              {loading ? (
                 <>
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                  Updating Event...
+                  Creating Event...
                 </>
               ) : (
                 <>
-                  <Calendar className="w-4 h-4 mr-2" /> Update Event
+                  <Calendar className="w-4 h-4 mr-2" />
+                  Create Event
                 </>
               )}
             </button>
@@ -322,4 +324,4 @@ const EditEvent: React.FC = () => {
   )
 }
 
-export default EditEvent
+export default CreateEvent

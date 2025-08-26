@@ -2,16 +2,16 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Login from "./components/Auth/Login";
 import EventList from "./components/EventList";
 import Register from "./components/Auth/Register";
-import OrganizerDashboard from "./pages/OrganizerDashboard";
-import CreateEvent from "./pages/CreateEvent";
+import OrganizerDashboard from "./pages/organizer/OrganizerDashboard";
+import CreateEvent from "./pages/organizer/CreateEvent";
 import ProtectedRoute from "./components/ProtectedRoute";
 import PublicRoute from "./components/PublicRoute";
-import EditEvent from "./pages/EditEvent";
+import EditEvent from "./pages/organizer/EditEvent";
 import Navbar from "./components/Navbar";
-import MyTickets from "./pages/MyTickets";
+import MyTickets from "./pages/attendee/MyTickets";
 import Profile from "./pages/Profile";
-import EventDetails from "./pages/EventDetails";
-import PaymentPage from "./pages/PaymentPage";
+import EventDetails from "./pages/attendee/EventDetails";
+import PaymentPage from "./pages/attendee/PaymentPage";
 
 const App = () => (
   <Router>

@@ -1,11 +1,11 @@
 import { useEffect, useState, useContext } from "react"
 import { useNavigate } from "react-router-dom"
-import api from "../services/api"
-import { AuthContext } from "../context/authContext"
+import api from "../../services/api"
+import { AuthContext } from "../../context/authContext"
 import { Calendar, MapPin, Users, Plus, Edit, Trash2, BarChart3, TrendingUp } from "lucide-react"
-import { Button } from "../components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
-import { Alert, AlertDescription } from "../components/ui/alert"
+import { Button } from "../../components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card"
+import { Alert, AlertDescription } from "../../components/ui/alert"
 
 interface Event {
   _id: string

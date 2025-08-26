@@ -1,6 +1,6 @@
 import { useEffect, useState, useContext } from "react"
-import api from "../services/api"
-import { AuthContext } from "../context/authContext"
+import api from "../../services/api"
+import { AuthContext } from "../../context/authContext"
 import {
   Calendar,
   MapPin,
