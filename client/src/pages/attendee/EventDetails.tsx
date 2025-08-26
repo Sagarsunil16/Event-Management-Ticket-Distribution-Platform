@@ -16,9 +16,8 @@ interface Event {
   totalTickets?: number
 }
 
-
 const EventDetails: React.FC = () => {
-  const {id} = useParams()
+  const { id } = useParams()
   const eventId = id
   const navigate = useNavigate()
   const { token } = useContext(AuthContext)
@@ -49,12 +48,12 @@ const EventDetails: React.FC = () => {
 
     if (event?.price && event.price > 0) {
       navigate(`/events/${eventId}/payment`, {
-      state: {
-        eventId,
-        eventTitle: event.title,
-        eventPrice: event.price,
-      },
-    });
+        state: {
+          eventId,
+          eventTitle: event.title,
+          eventPrice: event.price,
+        },
+      })
       return
     }
 
@@ -137,14 +136,15 @@ const EventDetails: React.FC = () => {
         <div className="absolute inset-0 bg-black opacity-20"></div>
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-center">
-            {/* Event Image Placeholder */}
+            {/* Date Display */}
             <div className="lg:col-span-1">
-              <div className="aspect-square bg-white/10 rounded-lg flex items-center justify-center backdrop-blur-sm">
-                <img
-                  src={`/event-poster-for-.png?height=300&width=300&query=event poster for ${event.title}`}
-                  alt={event.title}
-                  className="w-full h-full object-cover rounded-lg"
-                />
+              <div className="aspect-square bg-white/10 rounded-lg flex flex-col items-center justify-center backdrop-blur-sm p-6">
+                <div className="text-center">
+                  <div className="text-6xl font-bold mb-2">{dateInfo.day}</div>
+                  <div className="text-2xl uppercase">{dateInfo.month}</div>
+                  <div className="text-lg mt-2">{dateInfo.time}</div>
+                  <div className="text-sm opacity-80 mt-1">{dateInfo.fullDate}</div>
+                </div>
               </div>
             </div>
 

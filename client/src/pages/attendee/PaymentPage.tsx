@@ -1,29 +1,16 @@
-import { useEffect, useState, useContext } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useContext,useState,useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements, CardElement, useStripe, useElements } from "@stripe/react-stripe-js";
 import api from "../../services/api";
 import { AuthContext } from "../../context/authContext";
 
-// Initialize Stripe with your publishable key
-console.log("Stripe Publishable Key:",import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY );
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY as string);
 
 interface PaymentFormProps {
   eventId: string;
   eventTitle: string;
   eventPrice: number;
-}
-interface Event {
-  _id: string
-  title: string
-  price: number
-  date: string
-  venue: string
-  category: string
-  description?: string
-  ticketsSold?: number
-  totalTickets?: number
 }
 
 const PaymentForm: React.FC<PaymentFormProps> = ({ eventId, eventTitle, eventPrice }) => {
@@ -177,22 +164,15 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ eventId, eventTitle, eventPri
 };
 
 const PaymentPage: React.FC = () => {
-  const { id } = useParams();
-  const eventId = id;
-  console.log('PaymentPage eventId:', eventId);
   const navigate = useNavigate();
-  const [event, setEvent] = useState<Event | null>(null);
-  const [error, setError] = useState("");
+  const location = useLocation();
+  const { eventId, eventTitle, eventPrice } = (location.state as {
+    eventId: string;
+    eventTitle: string;
+    eventPrice: number;
+  }) || {};
 
-  useEffect(() => {
-    if (!eventId) return;
-    api
-      .get(`/events/${eventId}`)
-      .then((res) => setEvent(res.data))
-      .catch(() => setError("Failed to load event details."));
-  }, [eventId]);
-
-  if (error || !event) {
+  if (!eventId || !eventTitle || eventPrice === undefined) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <div className="bg-white rounded-lg shadow-md p-8 max-w-md w-full text-center">
@@ -200,7 +180,7 @@ const PaymentPage: React.FC = () => {
             <span className="text-red-600 text-2xl">⚠️</span>
           </div>
           <h2 className="text-xl font-semibold text-gray-900 mb-2">Error</h2>
-          <p className="text-red-600 mb-4">{error || "Event not found."}</p>
+          <p className="text-red-600 mb-4">Invalid event data. Please select an event.</p>
           <button
             onClick={() => navigate("/events")}
             className="bg-emerald-600 text-white px-6 py-2 rounded-lg hover:bg-emerald-700 transition-colors"
@@ -217,9 +197,9 @@ const PaymentPage: React.FC = () => {
       <div className="bg-white rounded-lg shadow-md p-8 max-w-md w-full">
         <Elements stripe={stripePromise}>
           <PaymentForm
-            eventId={eventId!}
-            eventTitle={event.title}
-            eventPrice={event.price || 0}
+            eventId={eventId}
+            eventTitle={eventTitle}
+            eventPrice={eventPrice}
           />
         </Elements>
       </div>
