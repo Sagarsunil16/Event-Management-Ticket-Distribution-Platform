@@ -9,7 +9,7 @@ interface jwtPayload{
     exp:number
 }
 
-export interface AuthRequest extends Request{
+export interface AuthRequest<T = any, P = any> extends Request<P, any, T> {
     user?:jwtPayload
 }
 

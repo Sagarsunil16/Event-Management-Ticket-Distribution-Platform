@@ -24,66 +24,55 @@ export class EventController {
     };
 
     async updateEvent(req: AuthRequest, res: Response, next: NextFunction) {
-        console.log("🎯 updateEvent called with ID:", req.params.id);
         try {
             const organizerId = req.user!.id;
-            console.log("Organizer ID:", organizerId, "Update Body:", req.body);
-            const event = await this._eventService.updateEvent(req.params.id, req.body, organizerId);
+            const { id } = req.params;
+            const event = await this._eventService.updateEvent(id, req.body, organizerId);
             res.status(200).json(event);
         } catch (err: any) {
-            console.error("❌ Error in updateEvent:", err);
             next(err);
         }
     };
 
     async deleteEvent(req: AuthRequest, res: Response, next: NextFunction) {
-        console.log("🎯 deleteEvent called with ID:", req.params.id);
         try {
             const organizerId = req.user!.id;
-            console.log("Organizer ID:", organizerId);
-            await this._eventService.deleteEvent(req.params.id, organizerId);
+           const { id } = req.params;
+            await this._eventService.deleteEvent(id, organizerId);
             res.status(204).send();
         } catch (err: any) {
-            console.error("❌ Error in deleteEvent:", err);
             next(err);
         }
     };
 
     async getEventById(req: Request, res: Response, next: NextFunction): Promise<void> {
-        console.log("🎯 getEventById called with ID:", req.params.id);
         try {
-            const event = await this._eventService.getEventById(req.params.id);
+            const { id } = req.params;
+            const event = await this._eventService.getEventById(id);
             if (!event) {
-                console.warn("⚠️ Event not found:", req.params.id);
                 res.status(404).json({ error: 'Event not found' });
             }
             res.status(200).json(event);
         } catch (err: any) {
-            console.error("❌ Error in getEventById:", err);
             next(err);
         }
     };
 
     async listEvents(req: Request, res: Response, next: NextFunction) {
-        console.log("🎯 listEvents called");
         try {
             const events = await this._eventService.listEvents();
             res.status(200).json(events);
         } catch (err: any) {
-            console.error("❌ Error in listEvents:", err);
             next(err);
         }
     };
 
     async listOrganizerEvents(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
-        console.log("🎯 listOrganizerEvents called");
         try {
             const organizerId = req.user!.id;
-            console.log("Organizer ID:", organizerId);
             const events = await this._eventService.listEventsByOrganizer(organizerId);
             res.status(200).json(events);
         } catch (err: any) {
-            console.error("❌ Error in listOrganizerEvents:", err);
             next(err);
         }
     };
