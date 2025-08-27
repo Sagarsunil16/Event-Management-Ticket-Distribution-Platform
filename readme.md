@@ -20,7 +20,7 @@ A production-ready full-stack MERN (MongoDB, Express, React, Node.js, TypeScript
 - **Modern Frontend**: React + TypeScript + Vite, validated forms with Formik & Yup, protected routes, responsive UI.
 - **Profile, Login, Register, and Event forms**: Robust Formik + Yup object validation.
 - **Error Handling**: Centralized responses in both frontend and backend.
-- **Easy Deployment**: Simple `.env` config, ready for Vercel/Netlify (frontend) and Render/Railway/Heroku (backend).
+- **Easy Deployment**: Simple `.env` config, ready for Vercel (frontend) and Render (backend).
 
 ---
 
@@ -42,7 +42,7 @@ A production-ready full-stack MERN (MongoDB, Express, React, Node.js, TypeScript
 ### 1. Clone the Repository
 
 git clone https://github.com/Sagarsunil16/Event-Management-Ticket-Distribution-Platform.git
-cd event-management-ticket-distribution-tlatform
+cd event-management-ticket-distribution-ptlatform
 
 
 
@@ -84,8 +84,8 @@ npm run dev
 
 ### 4. Open in browser:
 
-- Backend default: [http://localhost:3000](http://localhost:3000)
-- Frontend default: [http://localhost:5173](http://localhost:5173)
+- Backend default: [http://localhost:3000]
+- Frontend default: [http://localhost:5173]
 
 ---
 
