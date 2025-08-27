@@ -1,25 +1,57 @@
 import { useState } from "react"
 import { useNavigate, Link } from "react-router-dom"
-import { Calendar, MapPin, Users, Tag, FileText, /* Upload */ ArrowLeft } from "lucide-react"
+import { Formik, Form, Field, ErrorMessage } from "formik"
+import * as Yup from "yup"
+import { Calendar, MapPin, Users, Tag, FileText, ArrowLeft } from "lucide-react"
 import api from "../../services/api"
+
+// Validation schema using Yup
+const EventSchema = Yup.object().shape({
+  title: Yup.string()
+    .min(3, "Title must be at least 3 characters")
+    .max(100, "Title must not exceed 100 characters")
+    .required("Event title is required"),
+  description: Yup.string()
+    .min(10, "Description must be at least 10 characters")
+    .max(1000, "Description must not exceed 1000 characters")
+    .required("Description is required"),
+  date: Yup.date()
+    .min(new Date(), "Event date must be in the future")
+    .required("Date and time are required"),
+  venue: Yup.string()
+    .min(3, "Venue must be at least 3 characters")
+    .max(200, "Venue must not exceed 200 characters")
+    .required("Venue is required"),
+  category: Yup.string()
+    .oneOf(
+      [
+        "Conference",
+        "Workshop",
+        "Concert",
+        "Sports",
+        "Festival",
+        "Networking",
+        "Exhibition",
+        "Seminar",
+        "Hackathon",
+        "Other",
+      ],
+      "Invalid category"
+    )
+    .required("Category is required"),
+  totalTickets: Yup.number()
+    .min(1, "At least 1 ticket is required")
+    .integer("Number of tickets must be an integer")
+    .required("Total tickets are required"),
+  price: Yup.number()
+    .min(0, "Price cannot be negative")
+    .required("Price is required"),
+})
 
 const CreateEvent: React.FC = () => {
   const navigate = useNavigate()
-  const [form, setForm] = useState({
-    title: "",
-    description: "",
-    date: "",
-    venue: "",
-    category: "",
-    totalTickets: 10,
-    price: 0,
-    // image: null as File | null, // removed for now
-  })
   const [error, setError] = useState("")
   const [success, setSuccess] = useState(false)
-  const [loading, setLoading] = useState(false)
-  // const [imagePreview, setImagePreview] = useState<string | null>(null)
-
   const categories = [
     "Conference",
     "Workshop",
@@ -33,50 +65,33 @@ const CreateEvent: React.FC = () => {
     "Other",
   ]
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
-  ) => {
-    const { name, value } = e.target
-    setForm({
-      ...form,
-      [name]: name === "totalTickets" || name === "price" ? Number(value) : value,
-    })
+  const initialValues = {
+    title: "",
+    description: "",
+    date: "",
+    venue: "",
+    category: "",
+    totalTickets: 10,
+    price: 0,
   }
 
-  // ❌ Image upload removed
-  /*
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      setForm({ ...form, image: file })
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string)
-      }
-      reader.readAsDataURL(file)
+  const handleSubmit = async (
+    values: typeof initialValues,
+    { setSubmitting }: any
+  ) => {
+    setError("")
+    try {
+      await api.post("/events", values, {
+        headers: { "Content-Type": "application/json" },
+      })
+      setSuccess(true)
+      setTimeout(() => navigate("/organizer/dashboard"), 1500)
+    } catch (err: any) {
+      setError(err.response?.data?.error || "Failed to create event")
+    } finally {
+      setSubmitting(false)
     }
   }
-  */
-
-  const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault()
-  setError("")
-  setLoading(true)
-
-  try {
-    await api.post("/events", form, {
-      headers: { "Content-Type": "application/json" },
-    })
-
-    setSuccess(true)
-    setTimeout(() => navigate("/organizer/dashboard"), 1500)
-  } catch (err: any) {
-    setError(err.response?.data?.error || "Failed to create event")
-  } finally {
-    setLoading(false)
-  }
-}
-
 
   if (success) {
     return (
@@ -120,205 +135,216 @@ const CreateEvent: React.FC = () => {
 
       {/* Form */}
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-sm border p-8 space-y-8">
-          {/* Basic Information */}
-          <div>
-            <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
-              <FileText className="w-5 h-5 mr-2 text-emerald-600" />
-              Basic Information
-            </h2>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Title */}
-              <div className="lg:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Event Title *
-                </label>
-                <input
-                  type="text"
-                  name="title"
-                  value={form.title}
-                  onChange={handleChange}
-                  required
-                  placeholder="Enter event title"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                />
-              </div>
-
-              {/* Description */}
-              <div className="lg:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Description *
-                </label>
-                <textarea
-                  name="description"
-                  value={form.description}
-                  onChange={handleChange}
-                  required
-                  rows={4}
-                  placeholder="Describe your event..."
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 resize-none"
-                />
-              </div>
-
-              {/* Date */}
+        <Formik
+          initialValues={initialValues}
+          validationSchema={EventSchema}
+          onSubmit={handleSubmit}
+        >
+          {({ isSubmitting }) => (
+            <Form className="bg-white rounded-xl shadow-sm border p-8 space-y-8">
+              {/* Basic Information */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  <Calendar className="w-4 h-4 inline mr-1" />
-                  Date & Time *
-                </label>
-                <input
-                  type="datetime-local"
-                  name="date"
-                  value={form.date}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                />
-              </div>
+                <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
+                  <FileText className="w-5 h-5 mr-2 text-emerald-600" />
+                  Basic Information
+                </h2>
 
-              {/* Venue */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  <MapPin className="w-4 h-4 inline mr-1" />
-                  Venue *
-                </label>
-                <input
-                  type="text"
-                  name="venue"
-                  value={form.venue}
-                  onChange={handleChange}
-                  required
-                  placeholder="Event venue or location"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                />
-              </div>
-
-              {/* Category */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  <Tag className="w-4 h-4 inline mr-1" />
-                  Category *
-                </label>
-                <select
-                  name="category"
-                  value={form.category}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                >
-                  <option value="">Select a category</option>
-                  {categories.map((cat) => (
-                    <option key={cat} value={cat}>
-                      {cat}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Price */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Ticket Price ($)
-                </label>
-                <input
-                  type="number"
-                  name="price"
-                  value={form.price}
-                  onChange={handleChange}
-                  min="0"
-                  step="0.01"
-                  placeholder="0.00"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                />
-                <p className="text-sm text-gray-500 mt-1">
-                  Leave as 0 for free events
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Tickets (image upload removed) */}
-          <div className="border-t border-gray-200 pt-8">
-            <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
-              <Users className="w-5 h-5 mr-2 text-emerald-600" />
-              Tickets
-            </h2>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Total Tickets */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Total Tickets Available *
-                </label>
-                <input
-                  type="number"
-                  name="totalTickets"
-                  value={form.totalTickets}
-                  onChange={handleChange}
-                  min="1"
-                  required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                />
-              </div>
-
-              {/* ❌ Event Image Removed */}
-              {/*
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  <Upload className="w-4 h-4 inline mr-1" />
-                  Event Image
-                </label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageChange}
-                  className="..."
-                />
-                {imagePreview && (
-                  <div className="mt-4">
-                    <img src={imagePreview} alt="Event preview" className="w-full h-48 object-cover rounded-lg" />
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Title */}
+                  <div className="lg:col-span-2 space-y-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Event Title *
+                    </label>
+                    <Field
+                      type="text"
+                      name="title"
+                      placeholder="Enter event title"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                      disabled={isSubmitting}
+                    />
+                    <ErrorMessage
+                      name="title"
+                      component="div"
+                      className="text-sm text-red-600"
+                    />
                   </div>
-                )}
+
+                  {/* Description */}
+                  <div className="lg:col-span-2 space-y-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Description *
+                    </label>
+                    <Field
+                      as="textarea"
+                      name="description"
+                      rows={4}
+                      placeholder="Describe your event..."
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 resize-none"
+                      disabled={isSubmitting}
+                    />
+                    <ErrorMessage
+                      name="description"
+                      component="div"
+                      className="text-sm text-red-600"
+                    />
+                  </div>
+
+                  {/* Date */}
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <Calendar className="w-4 h-4 inline mr-1" />
+                      Date & Time *
+                    </label>
+                    <Field
+                      type="datetime-local"
+                      name="date"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                      disabled={isSubmitting}
+                    />
+                    <ErrorMessage
+                      name="date"
+                      component="div"
+                      className="text-sm text-red-600"
+                    />
+                  </div>
+
+                  {/* Venue */}
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <MapPin className="w-4 h-4 inline mr-1" />
+                      Venue *
+                    </label>
+                    <Field
+                      type="text"
+                      name="venue"
+                      placeholder="Event venue or location"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                      disabled={isSubmitting}
+                    />
+                    <ErrorMessage
+                      name="venue"
+                      component="div"
+                      className="text-sm text-red-600"
+                    />
+                  </div>
+
+                  {/* Category */}
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <Tag className="w-4 h-4 inline mr-1" />
+                      Category *
+                    </label>
+                    <Field
+                      as="select"
+                      name="category"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                      disabled={isSubmitting}
+                    >
+                      <option value="">Select a category</option>
+                      {categories.map((cat) => (
+                        <option key={cat} value={cat}>
+                          {cat}
+                        </option>
+                      ))}
+                    </Field>
+                    <ErrorMessage
+                      name="category"
+                      component="div"
+                      className="text-sm text-red-600"
+                    />
+                  </div>
+
+                  {/* Price */}
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Ticket Price ($)
+                    </label>
+                    <Field
+                      type="number"
+                      name="price"
+                      min="0"
+                      step="0.01"
+                      placeholder="0.00"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                      disabled={isSubmitting}
+                    />
+                    <ErrorMessage
+                      name="price"
+                      component="div"
+                      className="text-sm text-red-600"
+                    />
+                    <p className="text-sm text-gray-500 mt-1">
+                      Leave as 0 for free events
+                    </p>
+                  </div>
+                </div>
               </div>
-              */}
-            </div>
-          </div>
 
-          {/* Error */}
-          {error && (
-            <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-red-600 text-sm">{error}</p>
-            </div>
-          )}
+              {/* Tickets */}
+              <div className="border-t border-gray-200 pt-8">
+                <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
+                  <Users className="w-5 h-5 mr-2 text-emerald-600" />
+                  Tickets
+                </h2>
 
-          {/* Buttons */}
-          <div className="flex justify-end space-x-4">
-            <Link
-              to="/organizer/dashboard"
-              className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              Cancel
-            </Link>
-            <button
-              type="submit"
-              disabled={loading}
-              className="px-8 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
-            >
-              {loading ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                  Creating Event...
-                </>
-              ) : (
-                <>
-                  <Calendar className="w-4 h-4 mr-2" />
-                  Create Event
-                </>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Total Tickets */}
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Total Tickets Available *
+                    </label>
+                    <Field
+                      type="number"
+                      name="totalTickets"
+                      min="1"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                      disabled={isSubmitting}
+                    />
+                    <ErrorMessage
+                      name="totalTickets"
+                      component="div"
+                      className="text-sm text-red-600"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Error */}
+              {error && (
+                <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+                  <p className="text-red-600 text-sm">{error}</p>
+                </div>
               )}
-            </button>
-          </div>
-        </form>
+
+              {/* Buttons */}
+              <div className="flex justify-end space-x-4">
+                <Link
+                  to="/organizer/dashboard"
+                  className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </Link>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="px-8 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                      Creating Event...
+                    </>
+                  ) : (
+                    <>
+                      <Calendar className="w-4 h-4 mr-2" />
+                      Create Event
+                    </>
+                  )}
+                </button>
+              </div>
+            </Form>
+          )}
+        </Formik>
       </div>
     </div>
   )

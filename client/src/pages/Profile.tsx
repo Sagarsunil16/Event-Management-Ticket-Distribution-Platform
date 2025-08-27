@@ -1,22 +1,54 @@
 import { useEffect, useState, useContext } from "react"
+import { Formik, Form, Field, ErrorMessage } from "formik"
+import * as Yup from "yup"
 import { User, Mail, Lock, Camera, Save, Eye, EyeOff } from "lucide-react"
 import api from "../services/api"
 import { AuthContext } from "../context/authContext"
 
+// Validation schema using Yup
+const ProfileSchema = Yup.object().shape({
+  name: Yup.string()
+    .min(2, "Name must be at least 2 characters")
+    .max(50, "Name must not exceed 50 characters")
+    .required("Name is required"),
+  email: Yup.string()
+    .email("Invalid email address")
+    .required("Email is required"),
+  profileInfo: Yup.string()
+    .max(500, "Profile info must not exceed 500 characters")
+    .optional(),
+  password: Yup.string()
+    .min(8, "Password must be at least 8 characters")
+    .matches(
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@#$!%*?&])[A-Za-z\d@#$!%*?&]{8,}$/,
+      "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character"
+    )
+    .optional(),
+  confirmPassword: Yup.string()
+    .when("password", {
+      is: (password: string) => !!password,
+      then: (schema) =>
+        schema
+          .oneOf([Yup.ref("password")], "Passwords must match")
+          .required("Confirm password is required when password is provided"),
+      otherwise: (schema) => schema.optional(),
+    }),
+})
+
 const Profile: React.FC = () => {
   const { token } = useContext(AuthContext)
-  const [form, setForm] = useState({
+  const [message, setMessage] = useState("")
+  const [error, setError] = useState("")
+  const [loading, setLoading] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [initialValues, setInitialValues] = useState({
     name: "",
     email: "",
     profileInfo: "",
     password: "",
     confirmPassword: "",
   })
-  const [message, setMessage] = useState("")
-  const [error, setError] = useState("")
-  const [loading, setLoading] = useState(false)
-  const [showPassword, setShowPassword] = useState(false)
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
   useEffect(() => {
     if (!token) return
@@ -24,7 +56,7 @@ const Profile: React.FC = () => {
     api
       .get("/users/me", { headers: { Authorization: `Bearer ${token}` } })
       .then((res) => {
-        setForm({
+        setInitialValues({
           name: res.data.user.name,
           email: res.data.user.email,
           profileInfo: res.data.user.profileInfo || "",
@@ -36,52 +68,39 @@ const Profile: React.FC = () => {
       .finally(() => setLoading(false))
   }, [token])
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setForm({ ...form, [e.target.name]: e.target.value })
-    // Clear messages when user starts typing
-    if (message) setMessage("")
-    if (error) setError("")
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleSubmit = async (
+    values: {
+      name: string
+      email: string
+      profileInfo: string
+      password: string
+      confirmPassword: string
+    },
+    { setSubmitting }: any
+  ) => {
     setError("")
     setMessage("")
-    setLoading(true)
-
-    if (form.password && form.password !== form.confirmPassword) {
-      setError("Passwords don't match")
-      setLoading(false)
-      return
-    }
-
-    if (form.password && form.password.length < 6) {
-      setError("Password must be at least 6 characters long")
-      setLoading(false)
-      return
-    }
-
     try {
-        const payload: any = {
-        name: form.name,
-        profileInfo: form.profileInfo,
-        }
+      const payload: any = {
+        name: values.name,
+        profileInfo: values.profileInfo,
+      }
 
-        if (form.password) {
-        payload.password = form.password
-        }
+      if (values.password) {
+        payload.password = values.password
+      }
 
       await api.put("/users/profile", payload, { headers: { Authorization: `Bearer ${token}` } })
       setMessage("Profile updated successfully")
-      setForm((prev) => ({ ...prev, password: "", confirmPassword: "" }))
+      setInitialValues((prev) => ({ ...prev, password: "", confirmPassword: "" }))
     } catch (err: any) {
       setError(err.response?.data?.error || "Update failed")
     } finally {
-      setLoading(false)
+      setSubmitting(false)
     }
   }
 
-  if (loading && !form.name) {
+  if (loading && !initialValues.name) {
     return (
       <div className="min-h-screen bg-gray-50 py-8">
         <div className="max-w-2xl mx-auto px-4">
@@ -121,7 +140,7 @@ const Profile: React.FC = () => {
                 </button>
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">{form.name || "Your Profile"}</h1>
+                <h1 className="text-2xl font-bold text-gray-900">{initialValues.name || "Your Profile"}</h1>
                 <p className="text-gray-600 mt-1">Manage your account settings and preferences</p>
               </div>
             </div>
@@ -132,151 +151,173 @@ const Profile: React.FC = () => {
           <div className="p-8">
             <h2 className="text-xl font-semibold text-gray-900 mb-6">Profile Information</h2>
 
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Basic Information Section */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-medium text-gray-900 border-b border-gray-200 pb-2">Basic Information</h3>
+            <Formik
+              initialValues={initialValues}
+              validationSchema={ProfileSchema}
+              onSubmit={handleSubmit}
+              enableReinitialize
+            >
+              {({ isSubmitting }) => (
+                <Form className="space-y-6">
+                  {/* Basic Information Section */}
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-medium text-gray-900 border-b border-gray-200 pb-2">Basic Information</h3>
 
-                <div className="space-y-4">
-                  <div>
-                    <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-                      Full Name
-                    </label>
-                    <div className="relative">
-                      <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                      <input
-                        id="name"
+                    <div className="space-y-2">
+                      <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
+                        Full Name
+                      </label>
+                      <div className="relative">
+                        <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                        <Field
+                          id="name"
+                          name="name"
+                          placeholder="Enter your full name"
+                          type="text"
+                          className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+                          disabled={isSubmitting}
+                        />
+                      </div>
+                      <ErrorMessage
                         name="name"
-                        value={form.name}
-                        onChange={handleChange}
-                        placeholder="Enter your full name"
-                        required
-                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+                        component="div"
+                        className="text-sm text-red-600"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                        Email Address
+                      </label>
+                      <div className="relative">
+                        <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                        <Field
+                          id="email"
+                          name="email"
+                          placeholder="Enter your email"
+                          type="email"
+                          className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg bg-gray-50 cursor-not-allowed text-gray-500"
+                          disabled
+                        />
+                      </div>
+                      <p className="text-sm text-gray-500 mt-1">Email cannot be changed</p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label htmlFor="profileInfo" className="block text-sm font-medium text-gray-700 mb-2">
+                        About You
+                      </label>
+                      <Field
+                        as="textarea"
+                        id="profileInfo"
+                        name="profileInfo"
+                        placeholder="Tell us about yourself, your interests, or your role..."
+                        rows={4}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors resize-none"
+                        disabled={isSubmitting}
+                      />
+                      <ErrorMessage
+                        name="profileInfo"
+                        component="div"
+                        className="text-sm text-red-600"
                       />
                     </div>
                   </div>
 
-                  <div>
-                    <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                      Email Address
-                    </label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                      <input
-                        id="email"
-                        name="email"
-                        value={form.email}
-                        onChange={handleChange}
-                        placeholder="Enter your email"
-                        type="email"
-                        disabled
-                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg bg-gray-50 cursor-not-allowed text-gray-500"
-                      />
+                  {/* Security Section */}
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-medium text-gray-900 border-b border-gray-200 pb-2">Security Settings</h3>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+                          New Password
+                        </label>
+                        <div className="relative">
+                          <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                          <Field
+                            id="password"
+                            name="password"
+                            placeholder="Enter new password"
+                            type={showPassword ? "text" : "password"}
+                            className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+                            disabled={isSubmitting}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                            disabled={isSubmitting}
+                          >
+                            {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                          </button>
+                        </div>
+                        <ErrorMessage
+                          name="password"
+                          component="div"
+                          className="text-sm text-red-600"
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
+                          Confirm Password
+                        </label>
+                        <div className="relative">
+                          <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                          <Field
+                            id="confirmPassword"
+                            name="confirmPassword"
+                            placeholder="Confirm new password"
+                            type={showConfirmPassword ? "text" : "password"}
+                            className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+                            disabled={isSubmitting}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                            disabled={isSubmitting}
+                          >
+                            {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                          </button>
+                        </div>
+                        <ErrorMessage
+                          name="confirmPassword"
+                          component="div"
+                          className="text-sm text-red-600"
+                        />
+                      </div>
                     </div>
-                    <p className="text-sm text-gray-500 mt-1">Email cannot be changed</p>
+
+                    <p className="text-sm text-gray-500">
+                      Leave password fields empty if you don't want to change your password
+                    </p>
                   </div>
 
-                  <div>
-                    <label htmlFor="profileInfo" className="block text-sm font-medium text-gray-700 mb-2">
-                      About You
-                    </label>
-                    <textarea
-                      id="profileInfo"
-                      name="profileInfo"
-                      value={form.profileInfo}
-                      onChange={handleChange}
-                      placeholder="Tell us about yourself, your interests, or your role..."
-                      rows={4}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors resize-none"
-                    />
+                  {/* Submit Button */}
+                  <div className="pt-6 border-t border-gray-200">
+                    <button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="w-full md:w-auto px-8 py-3 bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-400 text-white font-medium rounded-lg transition-colors flex items-center justify-center space-x-2"
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                          <span>Updating...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Save className="w-5 h-5" />
+                          <span>Update Profile</span>
+                        </>
+                      )}
+                    </button>
                   </div>
-                </div>
-              </div>
-
-              {/* Security Section */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-medium text-gray-900 border-b border-gray-200 pb-2">Security Settings</h3>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-                      New Password
-                    </label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                      <input
-                        id="password"
-                        name="password"
-                        value={form.password}
-                        onChange={handleChange}
-                        placeholder="Enter new password"
-                        type={showPassword ? "text" : "password"}
-                        className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                      >
-                        {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                      </button>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
-                      Confirm Password
-                    </label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                      <input
-                        id="confirmPassword"
-                        name="confirmPassword"
-                        value={form.confirmPassword}
-                        onChange={handleChange}
-                        placeholder="Confirm new password"
-                        type={showConfirmPassword ? "text" : "password"}
-                        className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                      >
-                        {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                {form.password && (
-                  <p className="text-sm text-gray-500">
-                    Leave password fields empty if you don't want to change your password
-                  </p>
-                )}
-              </div>
-
-              {/* Submit Button */}
-              <div className="pt-6 border-t border-gray-200">
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full md:w-auto px-8 py-3 bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-400 text-white font-medium rounded-lg transition-colors flex items-center justify-center space-x-2"
-                >
-                  {loading ? (
-                    <>
-                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                      <span>Updating...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Save className="w-5 h-5" />
-                      <span>Update Profile</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            </form>
+                </Form>
+              )}
+            </Formik>
 
             {/* Messages */}
             {message && (
