@@ -42,7 +42,7 @@ A production-ready full-stack MERN (MongoDB, Express, React, Node.js, TypeScript
 ### 1. Clone the Repository
 
 git clone https://github.com/Sagarsunil16/Event-Management-Ticket-Distribution-Platform.git
-cd event-management-platform
+cd event-management-ticket-tistribution-tlatform
 
 
 
