@@ -88,11 +88,14 @@ const Login = () => {
           </CardHeader>
           <CardContent>
             <Formik
-              initialValues={{ email: "", password: "" }}
+              initialValues={{
+                email: "organizer@gmail.com",   // 👈 default organizer login
+                password: "Organizer123#"
+              }}
               validationSchema={LoginSchema}
               onSubmit={handleSubmit}
             >
-              {({ isSubmitting }) => (
+              {({ isSubmitting, setValues }) => (
                 <Form className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="email" className="text-sm font-medium">
@@ -154,16 +157,27 @@ const Login = () => {
                     {isSubmitting ? "Signing In..." : "Sign In"}
                   </Button>
 
-                  {/* <div className="text-center">
+                  {/* Dummy fill buttons */}
+                  <div className="flex justify-between gap-2 pt-2">
                     <Button
                       type="button"
-                      variant="link"
-                      className="text-sm text-muted-foreground hover:text-primary"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setValues({ email: "organizer@gmail.com", password: "Organizer123#" })}
                       disabled={isSubmitting}
                     >
-                      Forgot your password?
+                      Use Organizer
                     </Button>
-                  </div> */}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setValues({ email: "attendee@gmail.com", password: "Attendee123#" })}
+                      disabled={isSubmitting}
+                    >
+                      Use Attendee
+                    </Button>
+                  </div>
                 </Form>
               )}
             </Formik>
